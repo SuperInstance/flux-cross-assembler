@@ -1,5 +1,15 @@
 # flux-cross-assembler
 
+
+## Meta
+
+**Domain:** constraint-theory
+**Depends on:** —
+**Depended by:** —
+**Implements:** Dual-target FLUX assembler — cloud (4-byte fixed) and edge (variable-width) byte...
+**Related:** —
+
+
 Dual-target FLUX assembler — compiles `.fluxasm` source to either cloud (4-byte fixed) or edge (variable-width) bytecode.
 
 Built from the ISA v3 dual-mode spec co-designed by Oracle1 (cloud encoding) and JetsonClaw1 (edge encoding).
