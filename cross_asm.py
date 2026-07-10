@@ -489,7 +489,8 @@ def main():
     args = parser.parse_args()
 
     if args.test:
-        run_tests()
+        passed, failed = run_tests()
+        sys.exit(1 if failed > 0 else 0)
         return
 
     if not args.input:
