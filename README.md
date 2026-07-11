@@ -7,7 +7,7 @@
 **Depends on:** —
 **Depended by:** —
 **Implements:** Dual-target FLUX assembler — cloud (4-byte fixed) and edge (variable-width) byte...
-**Related:** —
+**Related:** flux-runtime, nexus-edge-runtime, isa-v3-edge-spec
 
 
 Dual-target FLUX assembler — compiles `.fluxasm` source to either cloud (4-byte fixed) or edge (variable-width) bytecode.
@@ -55,7 +55,7 @@ HALT
 ```
 
 **Cloud output:** `2b0103002b0204000800010280000000` (16 bytes)
-**Edge output:** `ca010300ca020400840100100a20` (11 bytes, 31% smaller)
+**Edge output:** `ca010300ca020400840020` (11 bytes, 31% smaller)
 
 ## Test Results
 
@@ -74,3 +74,9 @@ This assembler is the bridge between Oracle1's cloud ISA and JetsonClaw1's edge 
 - JetsonClaw1: ISA v3 edge spec, conformance runner, tri-language modules
 
 The cross-assembler makes one source file produce correct bytecode for either target — the agent writes code once, the assembler handles the translation.
+
+## Related Repos
+
+- **[flux-runtime](https://github.com/SuperInstance/flux-runtime)** — cloud runtime whose ISA v2 opcodes define this assembler's 4-byte cloud target; the direct consumer of cloud bytecode output.
+- **[isa-v3-edge-spec](https://github.com/Lucineer/isa-v3-edge-spec)** — defines the variable-width edge encoding that this assembler's edge target implements.
+- **[nexus-edge-runtime](https://github.com/SuperInstance/nexus-edge-runtime)** — contains a bytecode VM and wire protocol for edge execution; shares the edge-bytecode problem domain.
