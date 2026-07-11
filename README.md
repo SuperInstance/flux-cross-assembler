@@ -36,7 +36,7 @@ python3 cross_asm.py --test
 - **Backend:** Cloud (4-byte fixed) or Edge (variable-width 1-3 byte)
 - **Opcode mapping:** Semantic mnemonics → target-specific byte sequences
 - **Confidence fusion:** `CADD`/`CSUB`/`CMUL`/`CDIV` work on both targets
-- **Density:** Edge encoding is ~69% the size of cloud for equivalent programs
+- **Density:** Edge encoding is ~56% the size of cloud for equivalent programs
 
 ## Spec Compliance
 
@@ -55,16 +55,18 @@ HALT
 ```
 
 **Cloud output:** `2b0103002b0204000800010280000000` (16 bytes)
-**Edge output:** `ca010300ca020400840020` (11 bytes, 31% smaller)
+**Edge output:** `ca0103ca0204840020` (9 bytes, 44% smaller)
 
 ## Test Results
 
 ```
-12/12 tests passing
+14/14 tests passing
 ✅ Cloud NOP, MOVI, IADD, multi-instruction programs
 ✅ Edge NOP, HALT, CADD, LDI, density comparison
 ✅ Cloud + Edge disassembly round-trip
-✅ Density: edge=11B cloud=16B (68.8%)
+✅ Density: edge=9B cloud=16B (56.2%)
+✅ Edge LDI is 3 bytes (emit matches size calc + disassembler)
+✅ Edge JMP label offset correct after LDI
 ```
 
 ## Co-Design

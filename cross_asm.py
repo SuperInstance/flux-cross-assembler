@@ -353,8 +353,13 @@ class CrossAssembler:
             return bytes([eo[mn], imm])
         if mn in ('LDI', 'MOVI'):
             reg = self._resolve_operand(ops[0]) & 0xFF if ops else 0
-            val = self._resolve_operand(ops[1]) & 0xFFFF if len(ops) > 1 else 0
-            return bytes([EdgeOp.LDI, reg, val & 0xFF, (val >> 8) & 0xFF])
+            # LDI is a 3-byte edge instruction (opcode + reg + imm8). This must
+            # match _edge_instruction_size() (three_byte) and _disassemble_edge()
+            # (>= 0xC0 -> 3 bytes), per the ISA v3 "3-byte (0xC0-0xFF)" range.
+            # Emitting a 16-bit immediate adds a 4th byte that desyncs label
+            # offsets (wrong jump targets) and breaks the disassembly round-trip.
+            val = self._resolve_operand(ops[1]) & 0xFF if len(ops) > 1 else 0
+            return bytes([EdgeOp.LDI, reg, val & 0xFF])
         if mn == 'JMP':
             addr = self._resolve_operand(ops[0]) & 0xFFFF if ops else 0
             return bytes([EdgeOp.JMP_ADDR, addr & 0xFF, (addr >> 8) & 0xFF])
@@ -437,9 +442,9 @@ def run_tests():
     bc = CrossAssembler("edge").parse("CADD 0x01").assemble_edge()
     tests.append(("Edge CADD", bc == bytes([0x80, 0x01])))
 
-    # Test 7: Edge LDI
+    # Test 7: Edge LDI (3-byte: opcode + reg + imm8)
     bc = CrossAssembler("edge").parse("LDI R8, 5").assemble_edge()
-    tests.append(("Edge LDI R8,5", bc == bytes([0xCA, 8, 5, 0])))
+    tests.append(("Edge LDI R8,5", bc == bytes([0xCA, 8, 5])))
 
     # Test 8: Multi-instruction cloud
     src = "MOVI R1, 3\nMOVI R2, 4\nIADD R0, R1, R2\nHALT"
@@ -468,6 +473,21 @@ def run_tests():
     edge_bc = CrossAssembler("edge").parse(src).assemble_edge()
     ratio = len(edge_bc) / len(cloud_bc)
     tests.append((f"Density: edge={len(edge_bc)}B cloud={len(cloud_bc)}B ({ratio:.1%})", ratio < 1.0))
+
+    # Test 13: Edge LDI emits exactly 3 bytes (opcode + reg + imm8). The emit
+    # length must agree with _edge_instruction_size() and _disassemble_edge(),
+    # otherwise label offsets and the disassembly round-trip desync.
+    bc = CrossAssembler("edge").parse("LDI R0, 7").assemble_edge()
+    tests.append(("Edge LDI is 3 bytes", bc == bytes([0xCA, 0, 7])))
+
+    # Test 14: Edge label offsets stay correct when preceded by LDI. JMP must
+    # target the JMP instruction itself; a 4-byte LDI emit would resolve the
+    # label one byte early and point the jump at a stray NOP.
+    src14 = "LDI R1, 1\nstart:\nJMP start"
+    asm14 = CrossAssembler("edge").parse(src14)
+    bc14 = asm14.assemble_edge()
+    tests.append(("Edge JMP offset after LDI",
+                  bc14 == bytes([0xCA, 1, 1, 0xC1, 0x03, 0x00])))
 
     for name, ok in tests:
         status = "✅" if ok else "❌"
